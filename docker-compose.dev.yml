@@ -1,0 +1,90 @@
+services:
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: courier
+      POSTGRES_PASSWORD: courier_dev
+      POSTGRES_DB: courier
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U courier -d courier"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - dev_pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--requirepass", "redis_dev"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis_dev", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build: ./backend
+    command: ["node", "dist/migrate.js"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgres://courier:courier_dev@database:5432/courier
+    depends_on:
+      database:
+        condition: service_healthy
+
+  seed-demo:
+    build: ./backend
+    command: ["node", "dist/seed-demo.js"]
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DEMO_MODE: "false"
+      DATABASE_URL: postgres://courier:courier_dev@database:5432/courier
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Run npm run configure:local first}
+      DEMO_SEED_PASSWORD: ${DEMO_SEED_PASSWORD:-StudentDemo2026!}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+  backend:
+    build: ./backend
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      DEMO_MODE: "false"
+      PORT: 4000
+      JWT_SECRET: ${JWT_SECRET:?Run npm run configure:local first}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Run npm run configure:local first}
+      DATABASE_URL: postgres://courier:courier_dev@database:5432/courier
+      REDIS_URL: redis://:redis_dev@redis:6379
+      FRONTEND_ORIGIN: http://localhost:3000
+    ports:
+      - "4000:4000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      seed-demo:
+        condition: service_completed_successfully
+      database:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        API_URL: http://backend:4000
+    environment:
+      API_URL: http://backend:4000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  dev_pgdata:

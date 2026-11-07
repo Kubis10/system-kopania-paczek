@@ -1,0 +1,20 @@
+.trackingQr {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  width: 108px;
+  height: 108px;
+  padding: 4px;
+  border: 1px solid #e1e8df;
+  border-radius: 4px;
+  background: white;
+}
+
+@media print {
+  .trackingQr {
+    right: 8mm;
+    bottom: 8mm;
+    width: 30mm;
+    height: 30mm;
+  }
+}

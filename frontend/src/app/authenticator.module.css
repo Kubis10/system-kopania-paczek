@@ -1,0 +1,6 @@
+.qr {
+  display: block;
+  margin: 12px auto;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}

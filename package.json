@@ -1,0 +1,15 @@
+{
+  "name": "przesylka-courier-system",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n api,web -c green,cyan \"npm --prefix backend run dev\" \"npm --prefix frontend run dev -- --port 3000\"",
+    "build": "npm --prefix backend run build && npm --prefix frontend run build",
+    "test": "npm --prefix backend test",
+    "lint": "npm --prefix frontend run lint",
+    "install:all": "npm install && npm --prefix backend install && npm --prefix frontend install",
+    "migrate": "npm --prefix backend run migrate",
+    "seed:admin": "npm --prefix backend run seed:admin",
+    "configure:local": "npm --prefix backend run configure:local"
+  },
+  "devDependencies": { "concurrently": "^9.2.1" }
+}
